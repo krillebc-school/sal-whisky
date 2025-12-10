@@ -28,6 +28,12 @@ public class FadTab implements Updatable {
     private Button addFadTilHyldeBtn = new Button("Placer fad på hylde");
     private TextArea FadPåLagerTextArea= new TextArea();
 
+    private TextField addVandTilfadTxf = new TextField();
+    private Button addVandTilFadBtn = new Button("Tilføj");
+
+    private Button angelShareBtn = new Button("Udregn");
+    private TextField angelShareNyMængdeTfx = new TextField();
+    private TextField angelShareAlkoholTfx = new TextField();
     private Stage popup;
 
     public GridPane getContent() {
@@ -99,7 +105,76 @@ public class FadTab implements Updatable {
         pane.add(addFadTilHyldeBtn, 4, 5);
         addFadTilHyldeBtn.setOnAction(event -> placerFadPåHylde());
 
+        pane.add(new Label("Udregn angel share"),2,0);
+        pane.add(angelShareBtn,5,0);
+        pane.add(angelShareNyMængdeTfx,3,0);
+        angelShareNyMængdeTfx.setPromptText("Ny mængde på fad");
+        pane.add(angelShareAlkoholTfx,4,0);
+        angelShareAlkoholTfx.setPromptText("Alkohol %");
+
+        angelShareBtn.setOnAction(event -> udregnAngel());
+
+        pane.add(new Label("Tilføj vand til fad"),2,1);
+        pane.add(addVandTilfadTxf,3,1);
+        addVandTilfadTxf.setPromptText("Liter");
+        pane.add(addVandTilFadBtn,4,1);
+        addVandTilFadBtn.setOnAction(event -> tilføjVand());
+
         return pane;
+    }
+
+    private void udregnAngel(){
+
+
+        if (fadListView.getSelectionModel().getSelectedItem() == null) {
+            new Alert(Alert.AlertType.ERROR, "Vælg et fad først.").showAndWait();
+
+        } else if (angelShareNyMængdeTfx.getText().isBlank() || angelShareAlkoholTfx.getText().isBlank()){
+            new Alert(Alert.AlertType.ERROR, "Venligst tjek om både ny mængde og alkohol procent er udfyldt.").showAndWait();
+
+
+        } else if (Double.parseDouble(angelShareAlkoholTfx.getText()) < 40){
+            new Alert(Alert.AlertType.ERROR, "alkohol procenten er for lavt.").showAndWait();
+            angelShareNyMængdeTfx.clear();
+            angelShareAlkoholTfx.clear();
+
+        } else if (Double.parseDouble(angelShareNyMængdeTfx.getText()) > fadListView.getSelectionModel().getSelectedItem().getLiterIFad()){
+            new Alert(Alert.AlertType.ERROR, "Mængden du har skrevet, er mindre end hvad der er i fadet.").showAndWait();
+            angelShareNyMængdeTfx.clear();
+            angelShareAlkoholTfx.clear();
+
+        }else if (Double.parseDouble(angelShareAlkoholTfx.getText()) > fadListView.getSelectionModel().getSelectedItem().getAlkoholProcent()){
+            new Alert(Alert.AlertType.ERROR, "alkohol procenten du har skrevet, er mere end hvad der er i fadet.").showAndWait();
+            angelShareNyMængdeTfx.clear();
+            angelShareAlkoholTfx.clear();
+
+        } else {
+            new Alert(Alert.AlertType.INFORMATION,"Angel share på fadet ID: " + fadListView.getSelectionModel().getSelectedItem().getId() + " , er: " +
+                    fadListView.getSelectionModel().getSelectedItem().getAngelShare(Double.parseDouble(angelShareNyMængdeTfx.getText()),Double.parseDouble(angelShareAlkoholTfx.getText()))).showAndWait();
+            angelShareNyMængdeTfx.clear();
+            angelShareAlkoholTfx.clear();
+            update();
+
+        }
+    }
+
+    private void tilføjVand(){
+
+        if (fadListView.getSelectionModel().getSelectedItem() == null) {
+            new Alert(Alert.AlertType.ERROR, "Vælg et fad først.").showAndWait();
+            addVandTilfadTxf.clear();
+
+        } else if (fadListView.getSelectionModel().getSelectedItem().getLiterIFad() + Integer.parseInt(addVandTilfadTxf.getText()) >  fadListView.getSelectionModel().getSelectedItem().getStørrelse()) {
+            new Alert(Alert.AlertType.ERROR, "Der er ikke nok plads på fadet.").showAndWait();
+            addVandTilfadTxf.clear();
+
+        } else {
+            fadListView.getSelectionModel().getSelectedItem().addVandTilFad(Integer.parseInt(addVandTilfadTxf.getText()));
+            addVandTilfadTxf.clear();
+            update();
+
+        }
+
     }
 
     private void placerFadPåHylde() {
